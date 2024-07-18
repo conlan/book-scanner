@@ -1,6 +1,7 @@
 import cv2
 import argparse
 import ocr
+import openai_platform
 
 from ultralytics import YOLO
 import supervision as sv
@@ -9,8 +10,9 @@ import numpy as np
 # tasteDive api key = 1031592-BookScan-0E9A97C5
 
 CLASS_ID_BOOK = 73
-CONFIDENCE_THRESHOLD = 0.6
+CONFIDENCE_THRESHOLD = 0.5
 KEY_ESCAPE = 27
+BOOK_IMAGE_CAPTURE_PATH = "book.jpg"
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='YOLOV8 Live')
@@ -37,21 +39,19 @@ def main():
     model = YOLO('yolov8l.pt')
 
     box_annotator = sv.BoxAnnotator(
-        thickness=2,
-        text_thickness=2,
+        thickness=1,
+        text_thickness=1,
         text_scale=1
     )
 
     counter = 0
     bookCountdown = 0
-
-    BOOK_IMAGE_CAPTURE_PATH = "book.jpg"
-
     bookDetection = None
     bookOCR = None
+    identifiedBookData = None
 
     while (True):
-        ret, frame = cap.read()
+        _, frame = cap.read()
 
         if (bookDetection is None) and (counter % 30) == 0:
             result = model(frame, agnostic_nms=True)[0]
@@ -79,21 +79,27 @@ def main():
                         cv2.imwrite(BOOK_IMAGE_CAPTURE_PATH, croppedImage)                    
 
                         bookDetection = [detection]
-                        bookCountdown = 60
+                        bookCountdown = 100
                         break
                     else:
                         print(f"Book detected but confidence is too low: {confidence:.2f}")
         elif (bookDetection is not None) and (bookOCR is None):
             bookOCR = ocr.detect_text_from_book(BOOK_IMAGE_CAPTURE_PATH)
-            print(bookOCR)
+        elif (bookOCR is not None) and (identifiedBookData is None):
+            identifiedBookData = openai_platform.identify_book_and_get_recommendations(bookOCR)
+            print(identifiedBookData)
         
 
         if bookDetection is not None:
-            labels = [
-                f"{model.model.names[class_id]}, {class_id} {confidence:.2f}"
-                for _, confidence, class_id, _
-                in detections
-            ]
+            _, confidence, class_id, _ = bookDetection[0]
+
+            labels = []
+
+            if (identifiedBookData is not None):
+                labels.append(identifiedBookData["title"])
+            else:
+                labels.append("Book detected...")
+
             frame = box_annotator.annotate(
                 scene=frame,
                 detections=bookDetection,
@@ -110,6 +116,7 @@ def main():
             if bookCountdown == 0:
                 bookDetection = None
                 bookOCR = None
+                identifiedBookData = None
                 counter = 0
 
         if cv2.waitKey(30) == KEY_ESCAPE:

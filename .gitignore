@@ -1,3 +1,5 @@
+__pycache__/
 book.jpg
 *.pt
 Vision-api-key.json
+.env
