@@ -1,36 +1,16 @@
 import cv2
 import argparse
-import os
+import ocr
 
 from ultralytics import YOLO
 import supervision as sv
 import numpy as np
 
-from google.cloud import vision
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'vision-api-key.json'
+# tasteDive api key = 1031592-BookScan-0E9A97C5
 
-visionClient = vision.ImageAnnotatorClient()
-
-def detect_text(image_path):
-    with open(image_path, 'rb') as image_file:
-        content = image_file.read()
-
-    image = vision.Image(content=content)
-
-    response = visionClient.document_text_detection(image=image)
-
-    full_text_annotation = response.full_text_annotation
-
-     # Extract all lines of text
-    lines = []
-    for page in full_text_annotation.pages:
-        for block in page.blocks:
-            for paragraph in block.paragraphs:
-                for word in paragraph.words:
-                    line = ''.join([symbol.text for symbol in word.symbols])
-                    lines.append(line)
-    
-    print(lines)
+CLASS_ID_BOOK = 73
+CONFIDENCE_THRESHOLD = 0.6
+KEY_ESCAPE = 27
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='YOLOV8 Live')
@@ -63,12 +43,12 @@ def main():
     )
 
     counter = 0
-    book_countdown = 0
+    bookCountdown = 0
 
-    CLASS_ID_BOOK = 73
-    CONFIDENCE_THRESHOLD = 0.6
+    BOOK_IMAGE_CAPTURE_PATH = "book.jpg"
 
     bookDetection = None
+    bookOCR = None
 
     while (True):
         ret, frame = cap.read()
@@ -86,6 +66,7 @@ def main():
                     
                     if confidence > CONFIDENCE_THRESHOLD:
                         x1, y1, x2, y2 = map(int, xyxy)
+
                         # Crop the image using the bounding box coordinates
                         croppedImage = frame[y1:y2, x1:x2]
 
@@ -95,15 +76,17 @@ def main():
                         
                         # print(pytesseract.image_to_string(croppedImage, config='--psm 11'))
                         
-                        cv2.imwrite("book.jpg", croppedImage)       
-
-                        detect_text("book.jpg")                 
+                        cv2.imwrite(BOOK_IMAGE_CAPTURE_PATH, croppedImage)                    
 
                         bookDetection = [detection]
-                        book_countdown = 30
+                        bookCountdown = 60
                         break
                     else:
                         print(f"Book detected but confidence is too low: {confidence:.2f}")
+        elif (bookDetection is not None) and (bookOCR is None):
+            bookOCR = ocr.detect_text_from_book(BOOK_IMAGE_CAPTURE_PATH)
+            print(bookOCR)
+        
 
         if bookDetection is not None:
             labels = [
@@ -121,14 +104,15 @@ def main():
 
         counter += 1
 
-        if book_countdown > 0:
-            book_countdown -= 1
+        if bookCountdown > 0:
+            bookCountdown -= 1
 
-            if book_countdown == 0:
+            if bookCountdown == 0:
                 bookDetection = None
+                bookOCR = None
                 counter = 0
 
-        if cv2.waitKey(30) == 27:
+        if cv2.waitKey(30) == KEY_ESCAPE:
             break
 
 if __name__ == '__main__':
