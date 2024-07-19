@@ -22,7 +22,9 @@ def get_thumbnail_image(book):
 
     image_np = np.array(image)
 
-    print(image_np.shape)
+    # if the shape isn't RGB then it's a grayscale image. Convert it to RGB
+    if len(image_np.shape) == 2:
+        image_np = np.stack((image_np, image_np, image_np), axis=-1)
 
     # set the image data in the book object
     book["thumbnailImage"] = image_np
