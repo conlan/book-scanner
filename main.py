@@ -49,7 +49,7 @@ def main():
         text_scale=1
     )
 
-    cooldown = 0
+    cooldown = 30
     # bookCooldown = 0
 
     bookDetection = None
@@ -84,6 +84,7 @@ def main():
                             cv2.imwrite(BOOK_IMAGE_CAPTURE_PATH, croppedImage)                    
 
                             bookDetection = [detection]
+                            cooldown = 30 # slightly longer cooldown for book detection
                             # bookCooldown = 100
                             break
                         else:
@@ -92,22 +93,14 @@ def main():
                 bookOCR = ocr.detect_text_from_book(BOOK_IMAGE_CAPTURE_PATH)
             elif (bookOCR is not None) and (identifiedBookData is None):
                 identifiedBookData = openai_platform.identify_book_and_get_recommendations(bookOCR)
-                print(identifiedBookData)
             elif (identifiedBookData is not None):
                 for recommendation in identifiedBookData["recommendations"]:
                     if (recommendation["thumbnailURL"] is None):
-                        hasFetchedAllThumbnailURLs = False
                         google_books.get_thumbnail_url(recommendation)
                         break
                     elif recommendation["thumbnailImage"] is None:
                         google_books.get_thumbnail_image(recommendation)
                         break
-
-                # if hasFetchedAllThumbnailURLs:
-                #     for recommendation in identifiedBookData["recommendations"]:
-                #         if (recommendation["thumbnailImage"] is None):
-                #             google_books.get_thumbnail_image(recommendation)
-                #             break
         
 
         if bookDetection is not None:
@@ -117,9 +110,6 @@ def main():
 
             if (identifiedBookData is not None):
                 labels.append(identifiedBookData["title"])
-
-                # add any thumbnails to the frame that we've fetched
-                thumbnail_annotator.annotate_thumbnails(identifiedBookData["recommendations"], frame)
             else:
                 labels.append("Book detected...")
 
@@ -128,6 +118,10 @@ def main():
                 detections=bookDetection,
                 labels=labels
             )
+
+            if identifiedBookData is not None:
+                # add any thumbnails to the frame that we've fetched
+                thumbnail_annotator.annotate_thumbnails(identifiedBookData["recommendations"], frame)
 
         cv2.imshow('frame', frame)
 

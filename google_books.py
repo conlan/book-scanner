@@ -61,12 +61,12 @@ def get_thumbnail_url(book):
 
         # get the thumbnail if it exists
         if 'imageLinks' in item['volumeInfo']:
-            thumbnail = item['volumeInfo']['imageLinks']['thumbnail']
+            thumbnailURL = item['volumeInfo']['imageLinks']['thumbnail']
 
             # set the thumbnail in the book object
-            book["thumbnailURL"] = thumbnail
+            book["thumbnailURL"] = thumbnailURL
 
-            print("Thumbnail found: ", thumbnail)
+            print("Thumbnail found: ", thumbnailURL)
         else:
             print("Thumbnail not found")    
     else:
