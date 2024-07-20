@@ -116,7 +116,7 @@ def main():
             if (identifiedBookData is not None):
                 labels.append(identifiedBookData["title"])
             else:
-                labels.append("Book detected...")
+                labels.append("Book detected (Confidence: {:.2f})".format(confidence))
 
             frame = box_annotator.annotate(
                 scene=frame,
