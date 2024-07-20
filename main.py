@@ -4,6 +4,7 @@ import ocr
 import openai_platform
 import thumbnail_annotator
 import google_books
+import constants
 
 from ultralytics import YOLO
 import supervision as sv
@@ -98,7 +99,8 @@ def main():
                     if (recommendation["thumbnailURL"] is None):
                         google_books.get_thumbnail_url(recommendation)
                         break
-                    elif recommendation["thumbnailImage"] is None:
+                    elif (recommendation["thumbnailURL"] != constants.PLACEHOLDER_THUMBNAIL_URL) and \
+                                (recommendation["thumbnailImage"] is None):
                         google_books.get_thumbnail_image(recommendation)
                         break
         
