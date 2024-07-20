@@ -1,3 +1,4 @@
 ultralytics==8.2.58
 supervision==0.3.0
 google-cloud-vision==3.7.3
+openai==1.5.0
