@@ -4,6 +4,7 @@ import ocr
 import openai_platform
 import thumbnail_annotator
 import google_books
+import torch
 
 from ultralytics import YOLO
 import supervision as sv
@@ -40,6 +41,10 @@ def main():
 
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
+
+    if torch.cuda.is_available():
+        print("Using GPU")
+        torch.cuda.set_device(0)
 
     model = YOLO('yolov8l.pt')
 
@@ -143,6 +148,9 @@ def main():
             bookDetection = None
             bookOCR = None
             identifiedBookData = None
+
+    cap.release()
+    cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
