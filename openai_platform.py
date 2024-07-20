@@ -63,9 +63,9 @@ def identify_book_and_get_recommendations(ocrLines):
         title = line.split(" %--% ")[0]
         author = line.split(" %--% ")[1]
 
-        # if title is longer than 20 characters, truncate it with an ellipsis
-        if len(title) > 20:
-            title = title[:20] + "..."
+        # if title is longer than 30 characters, truncate it with an ellipsis
+        if len(title) > 30:
+            title = title[:30] + "..."
 
         books.append({
             'title' : title,
