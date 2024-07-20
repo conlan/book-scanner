@@ -1,0 +1,1 @@
+PLACEHOLDER_THUMBNAIL_URL = "https://placehold.co/128x200.jpg"

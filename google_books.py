@@ -1,5 +1,6 @@
 import string
 import requests
+import constants
 
 from PIL import Image
 import numpy as np
@@ -52,7 +53,7 @@ def get_thumbnail_url(book):
     # get the JSON response
     data = response.json()
 
-    book["thumbnailURL"] = "https://placehold.co/128x200.jpg"
+    book["thumbnailURL"] = constants.PLACEHOLDER_THUMBNAIL_URL
 
     # if there are items in the response
     if 'items' in data:
